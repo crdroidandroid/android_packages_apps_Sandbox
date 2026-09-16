@@ -71,6 +71,8 @@
     <string name="spoof_verify_apps_usb_description">Report app verification over USB as disabled</string>
     <string name="spoof_accessibility">Accessibility</string>
     <string name="spoof_accessibility_description">Report accessibility services as disabled</string>
+    <string name="spoof_selinux_enforcing">SELinux em modo Enforcing</string>
+    <string name="spoof_selinux_enforcing_description">Informa que o SELinux está em modo Enforcing sem expor o estado real</string>
     <string name="spoof_count_format">%d settings spoofed</string>
     <!-- Notifications tab -->
     <string name="notifications_locked_title">Notifications Locked</string>

@@ -629,7 +629,9 @@ private val SPOOF_SETTINGS = listOf(
     SpoofSettingEntry("package_verifier_user_consent",
             R.string.spoof_package_verifier, R.string.spoof_package_verifier_description),
     SpoofSettingEntry("verify_apps_over_usb",
-            R.string.spoof_verify_apps_usb, R.string.spoof_verify_apps_usb_description)
+            R.string.spoof_verify_apps_usb, R.string.spoof_verify_apps_usb_description),
+    SpoofSettingEntry(android.app.AxSandboxManager.SPOOF_SELINUX_ENFORCING,
+            R.string.spoof_selinux_enforcing, R.string.spoof_selinux_enforcing_description)
 )
 
 private val SPOOF_ACCESSIBILITY_KEYS = listOf(
