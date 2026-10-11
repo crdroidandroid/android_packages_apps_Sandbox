@@ -41,7 +41,9 @@ class BackupManager(private val context: Context) {
             "verify_apps_over_usb",
             "accessibility_enabled",
             "enabled_accessibility_services",
-            "accessibility_display_inversion_enabled"
+            "accessibility_display_inversion_enabled",
+            AxSandboxManager.SPOOF_SELINUX_ENFORCING,
+            AxSandboxManager.SPOOF_ROOT_ENVIRONMENT
         )
     }
 
@@ -70,26 +72,24 @@ class BackupManager(private val context: Context) {
                 appObj.put("isHidden", isHidden)
                 appObj.put("isSandboxed", isSandboxed)
 
-                if (isSandboxed) {
-                    val gids = sandboxManager.getRestrictedGids(packageName)
-                    if (gids != null && gids.isNotEmpty()) {
-                        val gidsArray = JSONArray()
-                        gids.forEach { gidsArray.put(it) }
-                        appObj.put("restrictedGids", gidsArray)
-                    }
+                val gids = sandboxManager.getRestrictedGids(packageName)
+                if (gids != null && gids.isNotEmpty()) {
+                    val gidsArray = JSONArray()
+                    gids.forEach { gidsArray.put(it) }
+                    appObj.put("restrictedGids", gidsArray)
+                }
 
-                    val isolation = sandboxManager.isSandboxDataIsolationEnabled(packageName)
-                    appObj.put("dataIsolation", isolation)
+                val isolation = sandboxManager.isSandboxDataIsolationEnabled(packageName)
+                appObj.put("dataIsolation", isolation)
 
-                    val spoofObj = JSONObject()
-                    for (key in SPOOF_KEYS) {
-                        if (sandboxManager.isSpoofSettingEnabled(packageName, key)) {
-                            spoofObj.put(key, true)
-                        }
+                val spoofObj = JSONObject()
+                for (key in SPOOF_KEYS) {
+                    if (sandboxManager.isSpoofSettingEnabled(packageName, key)) {
+                        spoofObj.put(key, true)
                     }
-                    if (spoofObj.length() > 0) {
-                        appObj.put("spoofSettings", spoofObj)
-                    }
+                }
+                if (spoofObj.length() > 0) {
+                    appObj.put("spoofSettings", spoofObj)
                 }
                 appsArray.put(appObj)
             }
@@ -153,28 +153,28 @@ class BackupManager(private val context: Context) {
 
                     if (isSandboxed) {
                         sandboxManager.addSandboxedPackage(packageName)
-                        
-                        val gidsArray = appObj.optJSONArray("restrictedGids")
-                        if (gidsArray != null) {
-                            val gids = IntArray(gidsArray.length())
-                            for (j in 0 until gidsArray.length()) {
-                                gids[j] = gidsArray.getInt(j)
-                            }
-                            sandboxManager.setRestrictedGids(packageName, gids)
-                        } else {
-                            sandboxManager.setRestrictedGids(packageName, intArrayOf())
-                        }
-
-                        val isolation = appObj.optBoolean("dataIsolation", false)
-                        sandboxManager.setSandboxDataIsolationEnabled(packageName, isolation)
-
-                        val spoofObj = appObj.optJSONObject("spoofSettings")
-                        for (key in SPOOF_KEYS) {
-                            val enabled = spoofObj?.optBoolean(key, false) ?: false
-                            sandboxManager.setSpoofSettingEnabled(packageName, key, enabled)
-                        }
                     } else {
                         sandboxManager.removeSandboxedPackage(packageName)
+                    }
+
+                    val gidsArray = appObj.optJSONArray("restrictedGids")
+                    if (gidsArray != null) {
+                        val gids = IntArray(gidsArray.length())
+                        for (j in 0 until gidsArray.length()) {
+                            gids[j] = gidsArray.getInt(j)
+                        }
+                        sandboxManager.setRestrictedGids(packageName, gids)
+                    } else {
+                        sandboxManager.setRestrictedGids(packageName, intArrayOf())
+                    }
+
+                    val isolation = appObj.optBoolean("dataIsolation", false)
+                    sandboxManager.setSandboxDataIsolationEnabled(packageName, isolation)
+
+                    val spoofObj = appObj.optJSONObject("spoofSettings")
+                    for (key in SPOOF_KEYS) {
+                        val enabled = spoofObj?.optBoolean(key, false) ?: false
+                        sandboxManager.setSpoofSettingEnabled(packageName, key, enabled)
                     }
                 } catch (e: Throwable) {
                     Log.e(TAG, "Error importing config for an app entry", e)
