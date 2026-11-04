@@ -194,6 +194,7 @@ data class AppInfo(
     val isHidden: Boolean,
     val isLauncherHidden: Boolean,
     val isSandboxed: Boolean,
+    val hasSandboxOption: Boolean,
     val isSystem: Boolean = false,
     val userId: Int = 0,
     val isClone: Boolean = false
@@ -289,6 +290,15 @@ fun SandboxApp(
                                 isHidden = userPkgs.hidden.contains(entry.packageName),
                                 isLauncherHidden = userPkgs.launcherHidden.contains(entry.packageName),
                                 isSandboxed = userPkgs.sandboxed.contains(entry.packageName),
+                                hasSandboxOption = try {
+                                    val gids = sandboxManager?.getRestrictedGids(
+                                            entry.packageName, entry.userId)
+                                    sandboxManager?.getEnabledSpoofSettings(
+                                            entry.packageName, entry.userId)?.isNotEmpty() == true ||
+                                            (gids != null && gids.isNotEmpty()) ||
+                                            sandboxManager?.isSandboxDataIsolationEnabled(
+                                                    entry.packageName, entry.userId) == true
+                                } catch (e: Exception) { false },
                                 isSystem = entry.isSystem,
                                 userId = entry.userId,
                                 isClone = entry.isClone
@@ -856,7 +866,11 @@ private val SPOOF_SETTINGS = listOf(
     SpoofSettingEntry("package_verifier_user_consent",
             R.string.spoof_package_verifier, R.string.spoof_package_verifier_description),
     SpoofSettingEntry("verify_apps_over_usb",
-            R.string.spoof_verify_apps_usb, R.string.spoof_verify_apps_usb_description)
+            R.string.spoof_verify_apps_usb, R.string.spoof_verify_apps_usb_description),
+    SpoofSettingEntry(AxSandboxManager.SPOOF_SELINUX_ENFORCING,
+            R.string.spoof_selinux_enforcing, R.string.spoof_selinux_enforcing_description),
+    SpoofSettingEntry(AxSandboxManager.SPOOF_ROOT_ENVIRONMENT,
+            R.string.spoof_root_environment, R.string.spoof_root_environment_description)
 )
 
 private val SPOOF_ACCESSIBILITY_KEYS = listOf(
@@ -883,7 +897,8 @@ private fun SpoofSettingsDropdown(
                 put(entry.key, sandboxManager.isSpoofSettingEnabled(
                         app.packageName, entry.key, app.userId))
             }
-            put("accessibility_spoof", SPOOF_ACCESSIBILITY_KEYS.all { key ->
+            // Keep a partially persisted group visible so one tap can clear every key.
+            put("accessibility_spoof", SPOOF_ACCESSIBILITY_KEYS.any { key ->
                 sandboxManager.isSpoofSettingEnabled(app.packageName, key, app.userId)
             })
         }
@@ -1101,9 +1116,17 @@ fun AppsTab(
     var showSystemApps by rememberSaveable { mutableStateOf(false) }
 
     val privateApps = remember(apps) { apps.filter { it.isLocked || it.isHidden } }
-    val sandboxedApps = remember(apps) { apps.filter { it.isSandboxed && !it.isLocked && !it.isHidden } }
-    val regularApps = remember(apps) { apps.filter { !it.isLocked && !it.isHidden && !it.isSandboxed && !it.isSystem } }
-    val systemApps = remember(apps) { apps.filter { !it.isLocked && !it.isHidden && !it.isSandboxed && it.isSystem } }
+    val sandboxedApps = remember(apps) {
+        apps.filter { (it.isSandboxed || it.hasSandboxOption) && !it.isLocked && !it.isHidden }
+    }
+    val regularApps = remember(apps) {
+        apps.filter { !it.isLocked && !it.isHidden && !it.isSandboxed &&
+                !it.hasSandboxOption && !it.isSystem }
+    }
+    val systemApps = remember(apps) {
+        apps.filter { !it.isLocked && !it.isHidden && !it.isSandboxed &&
+                !it.hasSandboxOption && it.isSystem }
+    }
 
     val effectiveExpanded = isPrivateUnlocked && isPrivateAreaExpanded
 
@@ -1253,7 +1276,7 @@ fun AppsTab(
             if (sandboxedApps.isNotEmpty()) {
                 SectionHeader(
                     icon = Icons.Filled.Security,
-                    title = stringResource(R.string.section_isolated_apps),
+                    title = stringResource(R.string.section_sandbox_apps),
                     count = sandboxedApps.size,
                     color = MaterialTheme.colorScheme.secondary
                 )

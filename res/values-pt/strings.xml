@@ -31,6 +31,7 @@
     <!-- App sections -->
     <string name="section_private_apps">Apps privados</string>
     <string name="section_isolated_apps">Apps isolados</string>
+    <string name="section_sandbox_apps">Apps do Sandbox</string>
     <string name="section_all_apps">Todos os apps</string>
     <string name="show_system_apps">Mostrar aplicativos do sistema</string>
     <!-- Setup private apps card -->
@@ -75,6 +76,10 @@
     <string name="spoof_verify_apps_usb_description">Reportar verificação do aplicativo pelo USB como desativado</string>
     <string name="spoof_accessibility">Acessibilidade</string>
     <string name="spoof_accessibility_description">Reportar serviços de acessibilidade como desativado</string>
+    <string name="spoof_selinux_enforcing">SELinux em modo Enforcing</string>
+    <string name="spoof_selinux_enforcing_description">Informa que o SELinux está em modo Enforcing sem expor o estado real</string>
+    <string name="spoof_root_environment">Ocultar ambiente root</string>
+    <string name="spoof_root_environment_description">Oculta deste app módulos, montagens, arquivos de root e sinais de ROM personalizada</string>
     <string name="spoof_count_format">Configurações de %d ocultas</string>
     <!-- Notifications tab -->
     <string name="notifications_locked_title">Notificações bloqueadas</string>
